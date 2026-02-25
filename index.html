@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- БАЗОВЫЕ СТИЛИ --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; min-height: 100vh; }
+        .container { display: flex; width: 100%; max-width: 900px; padding: 20px; }
+
+        /* САЙДБАР */
+        .sidebar { width: 200px; padding-right: 20px; display: flex; flex-direction: column; gap: 15px; position: sticky; top: 20px; height: fit-content; }
+        
+        /* Стили кнопок меню */
+        .nav-item { display: flex; align-items: center; gap: 15px; font-size: 20px; font-weight: 600; cursor: pointer; padding: 15px 10px; border-radius: 30px; transition: 0.2s; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); }
+        .nav-item.active { font-weight: 800; }
+
+        /* ГЛАВНАЯ */
+        .main-content { flex: 1; max-width: 600px; margin-left: 20px; border-left: 1px solid #2f3336; border-right: 1px solid #2f3336; min-height: 100vh; }
+
+        /* HOME */
+        #home-view { display: block; padding: 20px; }
+        .input-box { border: 1px solid #2f3336; border-radius: 20px; padding: 15px; background-color: #000; margin-bottom: 30px; }
+        .input-top { display: flex; gap: 12px; align-items: flex-start; }
+        .avatar-circle { width: 40px; height: 40px; background-color: #fff; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; background-size: cover; background-position: center; }
+        .input-area { width: 100%; }
+        .input-field { background: transparent; border: none; color: #fff; font-size: 20px; width: 100%; outline: none; font-family: inherit; margin-top: 5px; margin-bottom: 10px; }
+        
+        #preview-container { margin-top: 10px; display: none; position: relative; width: 100%; }
+        #preview-image, #preview-video { width: 100%; border-radius: 20px; display: none; }
+        .overlay-btn { position: absolute; top: 12px; background: rgba(15,20,25,0.75); color: white; border: none; cursor: pointer; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .btn-edit { left: 12px; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
+        .btn-close { right: 12px; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; }
+
+        .input-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-left: 52px; }
+        .icons { display: flex; gap: 15px; }
+        .icon-blue { color: #1d9bf0; font-size: 20px; cursor: pointer; }
+        .post-btn { background-color: #eff3f4; color: #000; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 15px; cursor: pointer; }
+
+        /* ПОСТ */
+        .post-item { display: flex; flex-direction: column; margin-bottom: 40px; padding-left: 20px; border-bottom: none; }
+        .post-header-group { display: inline-flex; align-items: center; gap: 10px; padding-bottom: 5px; border-bottom: 2px solid white; margin-bottom: 15px; width: fit-content; }
+        .post-logo-small { width: 30px; height: 30px; background-color: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; background-size: cover; background-position: center; }
+        .post-name { font-size: 24px; font-weight: 700; color: white; }
+        .post-text { font-size: 22px; color: #d9d9d9; margin-bottom: 10px; margin-left: 10px; }
+        .post-media-final { width: 100%; border-radius: 15px; margin-bottom: 10px; margin-left: 10px; display: block; }
+        .post-footer { display: flex; gap: 60px; margin-left: 10px; color: #71767b; font-size: 13px; margin-top: 5px; }
+        .footer-icon { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .footer-icon:hover { color: #1d9bf0; } .footer-icon.heart:hover { color: #f91880; }
+        .footer-icon.trash:hover { color: #f4212e; }
+
+        /* ВЫПАДАЮЩИЕ КОММЕНТАРИИ */
+        .comments-section { display: none; margin-top: 15px; margin-left: 25px; padding-left: 20px; border-left: 2px solid #333; }
+        .comment-input-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mini-input { width: 100%; background: transparent; border: 1px solid #333; border-radius: 15px; padding: 8px 12px; color: #fff; outline: none; }
+        .mini-btn { background-color: #fff; color: #000; border: none; border-radius: 15px; padding: 0 15px; font-weight: bold; cursor: pointer; }
+        .comment-item { margin-bottom: 15px; animation: fadeIn 0.3s; }
+        .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .comment-avatar { width: 20px; height: 20px; background: #fff; border-radius: 50%; color: #000; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; background-size: cover; background-position: center; }
+        .comment-name-text { font-size: 16px; font-weight: 700; color: #ccc; }
+        .comment-body { font-size: 16px; color: #fff; margin-left: 28px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* PROFILE */
+        #profile-view { display: none; width: 100%; }
+        .profile-nav-header { position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 50; padding: 5px 15px; border-bottom: 1px solid #2f3336; display: flex; align-items: center; gap: 20px; height: 53px; }
+        .arrow-back { font-size: 18px; cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .arrow-back:hover { background: rgba(255,255,255,0.1); }
+        .profile-title-text h2 { font-size: 20px; line-height: 1.2; font-weight: 700; }
+        .profile-title-text span { font-size: 13px; color: #71767b; }
+
+        .profile-banner { width: 100%; height: 200px; background-color: #333639; position: relative; background-size: cover; background-position: center; cursor: pointer; transition: opacity 0.2s; }
+        .profile-banner:hover { opacity: 0.9; }
+
+        .profile-avatar-big { width: 134px; height: 134px; border-radius: 50%; background-color: #000; border: 4px solid #000; position: absolute; bottom: -67px; left: 15px; background-image: url('https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'); background-size: cover; background-position: center; cursor: pointer; transition: filter 0.2s; z-index: 10; }
+        .profile-avatar-big:hover { filter: brightness(0.8); }
+
+        .profile-actions { display: flex; justify-content: flex-end; padding: 10px 15px; height: 75px; }
+        .profile-details { padding: 0 15px 15px 15px; }
+        .editable-text { cursor: pointer; width: fit-content; transition: 0.2s; }
+        .editable-text:hover { color: #1d9bf0; text-decoration: underline; }
+        .fullname-x { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+        .username-x { color: #71767b; font-size: 15px; margin-bottom: 12px; }
+        .bio-x { font-size: 15px; margin-bottom: 12px; }
+
+        .tabs-x { display: flex; border-bottom: 1px solid #2f3336; margin-top: 10px; }
+        .tab-x { flex: 1; text-align: center; padding: 15px 0; color: #71767b; font-weight: 500; cursor: pointer; position: relative; }
+        .tab-x:hover { background: rgba(255,255,255,0.03); color: #fff; }
+        .tab-x.active { color: #fff; font-weight: 700; }
+        .tab-x.active::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 56px; height: 4px; background: #1d9bf0; border-radius: 2px; }
+        
+        #profile-feed-content { padding-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- МЕНЮ (БЕЗ ЛОГО) -->
+        <aside class="sidebar">
+            <div style="font-size: 24px; font-weight: 800; padding: 10px 10px 5px 10px;">toxi</div>
+            <div class="nav-item active" id="btn-home"><i class="fas fa-home"></i> <span>Home</span></div>
+            <div class="nav-item" id="btn-profile"><i class="far fa-user"></i> <span>Profile</span></div>
+            <div class="nav-item" id="btn-register"><i class="far fa-id-card"></i> <span>Register</span></div>
+        </aside>
+
+        <main class="main-content">
+            
+            <!-- HOME VIEW -->
+            <div id="home-view">
+                <div class="input-box">
+                    <div class="input-top">
+                        <div class="avatar-circle" id="home-avatar-small">LOGO</div>
+                        <div class="input-area">
+                            <input type="text" class="input-field" id="input-text" placeholder="What's happening?">
+                            <div id="preview-container">
+                                <img id="preview-image" src="" alt="preview">
+                                <video id="preview-video" controls autoplay loop muted></video>
+                                <button class="overlay-btn btn-edit">Edit</button>
+                                <button class="overlay-btn btn-close" id="remove-media"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-bottom">
+                        <div class="icons">
+                            <input type="file" id="file-upload" hidden accept="image/*, video/*">
+                            <i class="far fa-image icon-blue" id="img-btn"></i>
+                            <i class="fas fa-film icon-blue" id="gif-btn"></i>
+                        </div>
+                        <button class="post-btn" id="btn-post">Post</button>
+                    </div>
+                </div>
+                <!-- ЛЕНТА ГЛАВНАЯ -->
+                <div id="feed-container"></div>
+            </div>
+
+            <!-- PROFILE VIEW -->
+            <div id="profile-view">
+                <div class="profile-nav-header">
+                    <div class="arrow-back" id="back-to-home"><i class="fas fa-arrow-left"></i></div>
+                    <div class="profile-title-text">
+                        <h2 id="header-name">123</h2>
+                        <span id="header-count">0 posts</span>
+                    </div>
+                </div>
+
+                <div class="profile-banner" id="banner-click-area" title="Change banner">
+                    <input type="file" id="upload-banner" hidden accept="image/*">
+                    <div class="profile-avatar-big" id="avatar-click-area" title="Change photo">
+                        <input type="file" id="upload-avatar" hidden accept="image/*">
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <div id="remove-verify-btn" style="display:none;">
+                        <button onclick="removeVerification()" style="background:transparent; border:1px solid #f4212e; color:#f4212e; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:600; font-size:14px; transition:0.2s;" onmouseover="this.style.background='rgba(244,33,46,0.1)'" onmouseout="this.style.background='transparent'">
+                            Remove badge
+                        </button>
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <div class="fullname-x editable-text" id="click-name" title="Change name">123</div>
+                    <div class="username-x editable-text" id="click-username" title="Change username">@123</div>
+                    <div class="bio-x editable-text" id="click-bio" title="Change bio">Click on my name or photo to change it! 🦖</div>
+                </div>
+
+                <div class="tabs-x">
+                    <div class="tab-x active" id="tab-posts">Posts</div>
+                    <div class="tab-x" id="tab-likes">Likes</div>
+                </div>
+                
+                <div id="profile-feed-content">
+                    <div style="text-align: center; color: #71767b;">Nothing here yet</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- ДАННЫЕ (LOCALSTORAGE) ---
+        let globalAvatarUrl = null;
+        let globalBannerUrl = null;
+        let profileName = "123";
+        let profileNick = "@123";
+        let profileBio = "Click on my name or photo to change it! 🦖";
+        let postsArray = []; 
+
+        function saveData() {
+            const data = {
+                posts: postsArray,
+                avatar: globalAvatarUrl,
+                banner: globalBannerUrl,
+                name: profileName,
+                nick: profileNick,
+                bio: profileBio
+            };
+            localStorage.setItem('dinoApp_data', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem('dinoApp_data');
+            if (raw) {
+                const data = JSON.parse(raw);
+                postsArray = data.posts || [];
+                globalAvatarUrl = data.avatar;
+                globalBannerUrl = data.banner;
+                profileName = data.name || "123";
+                profileNick = data.nick || "@123";
+                profileBio = data.bio || "Click on my name or photo to change it! 🦖";
+                updateProfileUI();
+            }
+        }
+
+        function updateProfileUI() {
+            document.getElementById('click-name').innerText = profileName;
+            document.getElementById('header-name').innerText = profileName;
+            document.getElementById('click-username').innerText = profileNick;
+            document.getElementById('click-bio').innerText = profileBio;
+            document.getElementById('header-count').innerText = postsArray.length + " posts";
+
+            if(globalAvatarUrl) {
+                document.getElementById('avatar-click-area').style.backgroundImage = `url('${globalAvatarUrl}')`;
+                document.getElementById('home-avatar-small').style.backgroundImage = `url('${globalAvatarUrl}')`;
+                document.getElementById('home-avatar-small').innerText = "";
+            }
+            if(globalBannerUrl) {
+                document.getElementById('banner-click-area').style.backgroundImage = `url('${globalBannerUrl}')`;
+            }
+            renderHomeFeed();
+        }
+
+        // --- ЭЛЕМЕНТЫ UI ---
+        const homeDiv = document.getElementById('home-view');
+        const profileDiv = document.getElementById('profile-view');
+        const btnHome = document.getElementById('btn-home');
+        const btnProfile = document.getElementById('btn-profile');
+        const backArrow = document.getElementById('back-to-home');
+        const feedContainer = document.getElementById('feed-container'); 
+        const profileFeedContent = document.getElementById('profile-feed-content');
+
+        // --- ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ ---
+        function showHome() {
+            homeDiv.style.display = 'block'; profileDiv.style.display = 'none';
+            btnHome.classList.add('active'); btnProfile.classList.remove('active');
+            renderHomeFeed();
+        }
+        function showProfile() {
+            homeDiv.style.display = 'none'; profileDiv.style.display = 'block';
+            btnHome.classList.remove('active'); btnProfile.classList.add('active');
+            renderProfilePosts(); 
+            document.querySelectorAll('.tab-x').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-posts').classList.add('active');
+        }
+        btnHome.addEventListener('click', showHome);
+        btnProfile.addEventListener('click', showProfile);
+        backArrow.addEventListener('click', showHome);
+
+        // --- ВКЛАДКИ ПРОФИЛЯ ---
+        const tabPosts = document.getElementById('tab-posts');
+        const tabLikes = document.getElementById('tab-likes');
+        tabPosts.addEventListener('click', () => { setActiveTab(tabPosts); renderProfilePosts(); });
+        tabLikes.addEventListener('click', () => { setActiveTab(tabLikes); renderLikedPosts(); });
+        function setActiveTab(tab) {
+            document.querySelectorAll('.tab-x').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+        }
+
+        // --- ГЕНЕРАЦИЯ ПОСТА ---
+        function createPostHTML(postObj, isProfileView = false) {
+            let displayName = postObj.name;
+            let displayAvatar = postObj.avatar;
+            
+            if(postObj.isCurrentUser) {
+                displayName = profileName;
+                displayAvatar = globalAvatarUrl;
+            }
+
+            // Добавить галочку если верифицирован
+            let badgeHTML = (postObj.isCurrentUser && isVerified) 
+                ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#1d9bf0;border-radius:50%;margin-left:6px;vertical-align:middle;flex-shrink:0;position:relative;top:-1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>`
+                : '';
+
+            let mediaHTML = '';
+            if (postObj.media) {
+                if (postObj.mediaType === 'video') mediaHTML = `<video src="${postObj.media}" class="post-media-final" controls loop></video>`;
+                else mediaHTML = `<img src="${postObj.media}" class="post-media-final">`;
+            }
+            
+            let textHTML = postObj.text ? `<div class="post-text">${postObj.text}</div>` : '';
+
+            let avatarStyle = "background-color: white;"; 
+            let avatarText = "YOU";
+            if (displayAvatar) {
+                avatarStyle = `background-image: url('${displayAvatar}'); background-size: cover; background-position: center;`;
+                avatarText = "";
+            }
+
+            let heartClass = postObj.liked ? 'fas fa-heart' : 'far fa-heart';
+            let heartColor = postObj.liked ? 'color: #f91880;' : '';
+            let arrowIcon = postObj.commentsOpen ? 'fa-chevron-up' : 'fa-chevron-down';
+
+            // Комментарии
+            let commentsHTML = '';
+            postObj.comments.forEach(c => {
+                let cAv = c.avatar;
+                let cName = c.name;
+                if(c.isCurrentUser) {
+                    cAv = globalAvatarUrl;
+                    cName = profileName;
+                }
+
+                let cAvStyle = "background-color: white;";
+                let cAvText = "U";
+                if(cAv) {
+                    cAvStyle = `background-image: url('${cAv}'); background-size: cover; background-position: center;`;
+                    cAvText = "";
+                }
+                commentsHTML += `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <div class="comment-avatar" style="${cAvStyle}">${cAvText}</div>
+                            <div class="comment-name-text">${cName}</div>
+                        </div>
+                        <div class="comment-body">${c.text}</div>
+                    </div>
+                `;
+            });
+
+            let commentSectionStyle = postObj.commentsOpen ? 'display: block;' : 'display: none;';
+
+            // ПОЛЕ ВВОДА (ТОЛЬКО ЕСЛИ НЕ ПРОФИЛЬ)
+            let commentInputHTML = '';
+            if (!isProfileView) {
+                commentInputHTML = `
+                    <div class="comment-input-row">
+                        <input type="text" class="mini-input" id="input-comment-${postObj.id}" placeholder="Write a reply...">
+                        <button class="mini-btn" onclick="addComment(${postObj.id})">Reply</button>
+                    </div>
+                `;
+            }
+
+            // Кнопка удаления
+            let deleteBtnHTML = '';
+            if (postObj.isCurrentUser) {
+                deleteBtnHTML = `
+                    <div class="footer-icon trash" onclick="deletePost(${postObj.id})">
+                        <i class="far fa-trash-alt"></i>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="post-item">
+                    <div class="post-header-group">
+                        <div class="post-logo-small" style="${avatarStyle}">${avatarText}</div>
+                        <div class="post-name" style="display:flex;align-items:center;">${displayName}${badgeHTML}</div>
+                    </div>
+                    <div class="post-content">${textHTML} ${mediaHTML}</div>
+                    <div class="post-footer">
+                        <div class="footer-icon" onclick="toggleComments(${postObj.id})">
+                            <i class="far fa-comment"></i> 
+                            <span>${postObj.comments.length}</span>
+                            <i class="fas ${arrowIcon}" style="margin-left: 8px; font-size: 12px;"></i>
+                        </div>
+                        <div class="footer-icon" style="${heartColor}" onclick="toggleLike(${postObj.id})">
+                            <i class="${heartClass}"></i> <span>${postObj.likesCount}</span>
+                        </div>
+                        ${deleteBtnHTML}
+                    </div>
+                    
+                    <div class="comments-section" id="comments-${postObj.id}" style="${commentSectionStyle}">
+                        ${commentInputHTML}
+                        <div id="list-comments-${postObj.id}">
+                            ${commentsHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- УДАЛЕНИЕ ПОСТА ---
+        window.deletePost = function(id) {
+            postsArray = postsArray.filter(p => p.id !== id);
+            saveData(); 
+            updateProfileUI(); 
+        }
+
+        // --- ЛОГИКА ОТКРЫТИЯ/ДОБАВЛЕНИЯ КОММЕНТАРИЕВ ---
+        window.toggleComments = function(id) {
+            const post = postsArray.find(p => p.id === id);
+            if(post) {
+                post.commentsOpen = !post.commentsOpen; 
+                saveData();
+                renderHomeFeed();
+                if(profileDiv.style.display === 'block') renderProfilePosts();
+            }
+        }
+
+        window.addComment = function(id) {
+            const input = document.getElementById(`input-comment-${id}`);
+            const text = input.value;
+            if(!text) return;
+
+            const post = postsArray.find(p => p.id === id);
+            if(post) {
+                const newComment = {
+                    name: profileName,
+                    avatar: globalAvatarUrl,
+                    text: text,
+                    isCurrentUser: true 
+                };
+                post.comments.push(newComment);
+                post.commentsOpen = true; 
+                saveData();
+                renderHomeFeed();
+                if(profileDiv.style.display === 'block') renderProfilePosts();
+            }
+        }
+
+        // --- РЕНДЕРИНГ СПИСКОВ ---
+        function renderProfilePosts() {
+            if (postsArray.length === 0) {
+                profileFeedContent.innerHTML = '<div style="text-align: center; color: #71767b; margin-top: 20px;">No posts yet</div>';
+                return;
+            }
+            let html = '';
+            postsArray.forEach(post => { html += createPostHTML(post, true); });
+            profileFeedContent.innerHTML = html;
+        }
+
+        function renderLikedPosts() {
+            const likedPosts = postsArray.filter(post => post.liked);
+            if (likedPosts.length === 0) {
+                profileFeedContent.innerHTML = '<div style="text-align: center; color: #71767b; margin-top: 20px;">You haven\'t liked anything yet</div>';
+                return;
+            }
+            let html = '';
+            likedPosts.forEach(post => { html += createPostHTML(post, true); });
+            profileFeedContent.innerHTML = html;
+        }
+
+        function renderHomeFeed() {
+            let html = '';
+            postsArray.forEach(post => { html += createPostHTML(post, false); });
+            feedContainer.innerHTML = html;
+        }
+
+        // --- СОЗДАНИЕ ПОСТА ---
+        const textInput = document.getElementById('input-text');
+        const postBtn = document.getElementById('btn-post');
+        const fileUpload = document.getElementById('file-upload');
+        const imgBtn = document.getElementById('img-btn');
+        const gifBtn = document.getElementById('gif-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const previewVideo = document.getElementById('preview-video');
+        const removeMediaBtn = document.getElementById('remove-media');
+
+        let currentMediaData = null; let currentMediaType = null;
+
+        function openFile() { fileUpload.click(); }
+        imgBtn.addEventListener('click', openFile);
+        gifBtn.addEventListener('click', openFile);
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    currentMediaData = ev.target.result;
+                    previewContainer.style.display = 'block';
+                    if (file.type.startsWith('video')) {
+                        currentMediaType = 'video';
+                        previewImage.style.display = 'none';
+                        previewVideo.style.display = 'block';
+                        previewVideo.src = currentMediaData;
+                    } else {
+                        currentMediaType = 'image';
+                        previewVideo.style.display = 'none';
+                        previewImage.style.display = 'block';
+                        previewImage.src = currentMediaData;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeMediaBtn.addEventListener('click', () => { currentMediaData = null; previewContainer.style.display = 'none'; fileUpload.value = ''; });
+
+        postBtn.addEventListener('click', () => {
+            const txt = textInput.value;
+            if(!txt && !currentMediaData) return;
+
+            const newPost = {
+                id: Date.now(), 
+                name: profileName,
+                avatar: globalAvatarUrl,
+                text: txt,
+                media: currentMediaData,
+                mediaType: currentMediaType,
+                liked: false,
+                likesCount: 0,
+                comments: [],
+                commentsOpen: false,
+                isCurrentUser: true 
+            };
+
+            postsArray.unshift(newPost);
+            saveData(); 
+            updateProfileUI(); 
+            textInput.value = ''; currentMediaData = null; previewContainer.style.display = 'none'; fileUpload.value = '';
+        });
+
+        // --- ЛАЙК ---
+        window.toggleLike = function(postId) {
+            const post = postsArray.find(p => p.id === postId);
+            if (post) {
+                post.liked = !post.liked;
+                post.likesCount = post.liked ? 1 : 0;
+                saveData(); 
+                renderHomeFeed();
+                if (profileDiv.style.display === 'block') {
+                    if (tabPosts.classList.contains('active')) renderProfilePosts();
+                    if (tabLikes.classList.contains('active')) renderLikedPosts();
+                }
+            }
+        }
+
+        // --- ИЗМЕНЕНИЕ ПРОФИЛЯ ---
+        const nameEl = document.getElementById('click-name');
+        const headerNameEl = document.getElementById('header-name');
+        const usernameEl = document.getElementById('click-username');
+        const bioEl = document.getElementById('click-bio');
+
+        nameEl.addEventListener('click', () => {
+            const newName = prompt("Enter name:", profileName);
+            if(newName) { profileName = newName; updateProfileUI(); saveData(); }
+        });
+        usernameEl.addEventListener('click', () => {
+            let newNick = prompt("Enter username:", profileNick);
+            if(newNick) { if(!newNick.startsWith('@')) newNick = '@'+newNick; profileNick = newNick; updateProfileUI(); saveData(); }
+        });
+        bioEl.addEventListener('click', () => {
+            const newBio = prompt("Enter bio:", profileBio);
+            if(newBio) { profileBio = newBio; updateProfileUI(); saveData(); }
+        });
+
+        // --- СМЕНА КАРТИНОК ---
+        const avatarArea = document.getElementById('avatar-click-area');
+        const avatarInput = document.getElementById('upload-avatar');
+        const bannerArea = document.getElementById('banner-click-area');
+        const bannerInput = document.getElementById('upload-banner');
+        const homeAvatarSmall = document.getElementById('home-avatar-small');
+
+        avatarArea.addEventListener('click', (e) => { e.stopPropagation(); avatarInput.click(); });
+        avatarInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    globalAvatarUrl = ev.target.result;
+                    updateProfileUI();
+                    saveData();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        bannerArea.addEventListener('click', () => { bannerInput.click(); });
+        bannerInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    globalBannerUrl = ev.target.result;
+                    updateProfileUI();
+                    saveData();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // ЗАГРУЗКА
+        loadData();
+
+    </script>
+    <!-- REGISTER MODAL -->
+    <div id="register-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#111; border:1px solid #2f3336; border-radius:20px; padding:30px; width:320px; text-align:center;">
+            <h2 style="margin-bottom:10px;">Register</h2>
+            <p style="color:#71767b; font-size:14px; margin-bottom:20px;">Enter your verification code</p>
+            <input type="password" id="register-code-input" placeholder="Enter code..." style="width:100%; background:#000; border:1px solid #333; border-radius:12px; padding:10px 15px; color:#fff; font-size:16px; outline:none; margin-bottom:15px; text-align:center; letter-spacing:4px;">
+            <div id="register-error" style="color:#f4212e; font-size:13px; margin-bottom:10px; display:none;">Invalid code</div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="closeRegisterModal()" style="background:transparent; border:1px solid #333; color:#fff; padding:8px 20px; border-radius:20px; cursor:pointer; font-size:14px;">Cancel</button>
+                <button onclick="submitRegisterCode()" style="background:#fff; color:#000; border:none; padding:8px 20px; border-radius:20px; cursor:pointer; font-weight:700; font-size:14px;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('btn-register').addEventListener('click', () => {
+            document.getElementById('register-modal').style.display = 'flex';
+            document.getElementById('register-code-input').value = '';
+            document.getElementById('register-error').style.display = 'none';
+        });
+
+        window.closeRegisterModal = function() {
+            document.getElementById('register-modal').style.display = 'none';
+        }
+
+        let isVerified = localStorage.getItem('dinoApp_verified') === 'true';
+
+        const BADGE = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#1d9bf0;border-radius:50%;margin-left:6px;vertical-align:middle;flex-shrink:0;position:relative;top:-1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>`;
+
+        function applyBadge() {
+            const nameEl2 = document.getElementById('click-name');
+            const headerEl = document.getElementById('header-name');
+            const removeBtn = document.getElementById('remove-verify-btn');
+
+            if (isVerified) {
+                if (nameEl2) nameEl2.innerHTML = profileName + BADGE;
+                if (headerEl) headerEl.innerHTML = profileName + BADGE;
+                if (removeBtn) removeBtn.style.display = 'block';
+            } else {
+                if (nameEl2) nameEl2.innerText = profileName;
+                if (headerEl) headerEl.innerText = profileName;
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+        }
+
+        window.removeVerification = function() {
+            isVerified = false;
+            localStorage.removeItem('dinoApp_verified');
+            applyBadge();
+            renderHomeFeed();
+        }
+
+        // Патчим updateProfileUI
+        const _orig = updateProfileUI;
+        updateProfileUI = function() { _orig(); applyBadge(); };
+
+        setTimeout(() => applyBadge(), 100);
+
+        window.submitRegisterCode = function() {
+            const code = document.getElementById('register-code-input').value;
+            if (code === '0739') {
+                isVerified = true;
+                localStorage.setItem('dinoApp_verified', 'true');
+                applyBadge();
+                closeRegisterModal();
+                alert('Account verified!');
+            } else {
+                document.getElementById('register-error').style.display = 'block';
+                document.getElementById('register-code-input').value = '';
+            }
+        }
+
+        document.getElementById('register-code-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitRegisterCode();
+        });
+    </script>
+</body>
+</html>
